@@ -12,21 +12,53 @@ public class Game {
 
     private List<Tile> activePath = new ArrayList<>();
 
+    private Stack<Tile> activePathHistory = new Stack<>();
+
     public List<Tile> getActivePath() {
         return activePath;
     }
 
     public void startNewGame() {
         board = new Board();
-        board.initialize(1);
+        board.initialize(difficulty);
         moveHistory.clear();
         activePath.clear();
+        activePathHistory.clear();
     }
 
+
     public void undoMove() {
-        if (!moveHistory.isEmpty()) {
+
+        if (!activePath.isEmpty() && !activePathHistory.isEmpty()) {
+            undoActivePathStep();
+        }
+
+        else if (!moveHistory.isEmpty()) {
             Move lastMove = moveHistory.pop();
             lastMove.reverse();
+        }
+    }
+
+
+    private void undoActivePathStep() {
+        if (activePath.isEmpty() || activePathHistory.isEmpty()) return;
+
+
+        Tile lastTile = activePathHistory.pop();
+        activePath.remove(lastTile);
+
+
+        lastTile.isHighlighted = false;
+
+
+        if (!activePath.isEmpty()) {
+            Tile previousTile = activePath.get(activePath.size() - 1);
+            board.removeConnection(previousTile, lastTile);
+        }
+
+
+        if (activePath.isEmpty()) {
+            activePathHistory.clear();
         }
     }
 
@@ -35,6 +67,7 @@ public class Game {
             board.clearPath();
             moveHistory.clear();
             activePath.clear();
+            activePathHistory.clear();
             for (Tile[] row : board.tiles) {
                 for (Tile tile : row) {
                     tile.isHighlighted = false;
@@ -47,10 +80,9 @@ public class Game {
     public boolean checkSolution() {
         if (board == null) return false;
 
-        // Sprawdź czy wszystkie liczby są połączone
+
         boolean allNumbersConnected = board.isComplete();
 
-        // Sprawdź czy nie ma pustych kafelków
         boolean noEmptyTiles = true;
         for (Tile[] row : board.tiles) {
             for (Tile tile : row) {
@@ -65,6 +97,7 @@ public class Game {
         return allNumbersConnected && noEmptyTiles;
     }
 
+
     public void step(Tile next) {
         if (activePath.isEmpty()) {
             if (next.value != null && !next.isConnected()) {
@@ -73,6 +106,7 @@ public class Game {
                     return;
                 }
                 activePath.add(next);
+                activePathHistory.push(next);
                 next.isHighlighted = true;
                 next.highlightColor = getColorForValue(next.value);
             }
@@ -87,13 +121,16 @@ public class Game {
 
             board.drawPath(last, next);
             activePath.add(next);
+            activePathHistory.push(next);
             next.isHighlighted = true;
             next.highlightColor = activePath.get(0).highlightColor;
 
             if (next.value != null && next.value.equals(activePath.get(0).value)) {
+
                 moveHistory.push(new Move(activePath.get(0), next, new ArrayList<>(activePath)));
                 for (Tile t : activePath) t.isHighlighted = false;
                 activePath.clear();
+                activePathHistory.clear();
             }
         }
     }
@@ -113,7 +150,7 @@ public class Game {
 
     private Color getColorForValue(Integer value) {
         if (value == null) return Color.BLUE;
-        Color[] colors = {Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE, Color.MAGENTA};
+        Color[] colors = {Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE, Color.MAGENTA, Color.CYAN, Color.PINK, Color.YELLOW};
         return colors[(value - 1) % colors.length];
     }
 }

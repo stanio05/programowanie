@@ -8,18 +8,101 @@ import java.util.List;
 public class GameUI extends JFrame {
     private Game game;
     private JPanel boardPanel;
+    private JPanel menuPanel;
+    private JPanel controlPanel;
+    private boolean isInGame = false;
+    private DifficultyLevel selectedDifficulty = DifficultyLevel.EASY;
 
     public GameUI(Game game) {
         this.game = game;
         setTitle("Numberlink Game");
         setSize(600, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setupUI();
-        game.startNewGame();
+        setupMenuUI();
+        setVisible(true);
+    }
+
+    private void setupMenuUI() {
+        getContentPane().removeAll();
+
+        menuPanel = new JPanel();
+        menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS));
+        menuPanel.setBackground(new Color(240, 248, 255));
+        menuPanel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
+
+        JLabel titleLabel = new JLabel("NUMBERLINK");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 48));
+        titleLabel.setForeground(new Color(25, 25, 112));
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel subtitleLabel = new JLabel("Połącz wszystkie pary numerów!");
+        subtitleLabel.setFont(new Font("Arial", Font.ITALIC, 18));
+        subtitleLabel.setForeground(Color.GRAY);
+        subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JPanel difficultyPanel = new JPanel();
+        difficultyPanel.setOpaque(false);
+        difficultyPanel.setLayout(new FlowLayout());
+        difficultyPanel.setForeground(new Color(25, 25, 112));
+        JLabel difficultyLabel = new JLabel("Poziom trudności: ");
+        difficultyLabel.setFont(new Font("Arial", Font.BOLD, 16));
+
+        JComboBox<DifficultyLevel> difficultyCombo = new JComboBox<>(DifficultyLevel.values());
+        difficultyCombo.setSelectedItem(selectedDifficulty);
+        difficultyCombo.setFont(new Font("Arial", Font.PLAIN, 14));
+        difficultyCombo.addActionListener(e -> {
+            selectedDifficulty = (DifficultyLevel) difficultyCombo.getSelectedItem();
+        });
+
+        difficultyPanel.add(difficultyLabel);
+        difficultyPanel.add(difficultyCombo);
+
+        JButton startGameButton = createMenuButton("Rozpocznij grę");
+        startGameButton.addActionListener(e -> startGame());
+        startGameButton.setForeground(new Color(25, 25, 112));
+        JButton exitButton = createMenuButton("Wyjście");
+        exitButton.addActionListener(e -> System.exit(0));
+        exitButton.setForeground(new Color(25, 25, 112));
+        menuPanel.add(Box.createVerticalGlue());
+        menuPanel.add(titleLabel);
+        menuPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        menuPanel.add(subtitleLabel);
+        menuPanel.add(Box.createRigidArea(new Dimension(0, 40)));
+        menuPanel.add(difficultyPanel);
+        menuPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        menuPanel.add(startGameButton);
+        menuPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        menuPanel.add(exitButton);
+        menuPanel.add(Box.createVerticalGlue());
+
+        add(menuPanel, BorderLayout.CENTER);
+        revalidate();
         repaint();
     }
 
-    private void setupUI() {
+    private JButton createMenuButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 20));
+        button.setPreferredSize(new Dimension(250, 50));
+        button.setMaximumSize(new Dimension(250, 50));
+        button.setAlignmentX(Component.CENTER_ALIGNMENT);
+        button.setBackground(new Color(25, 25, 112));
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        return button;
+    }
+
+    private void startGame() {
+        isInGame = true;
+        game.difficulty = selectedDifficulty;
+        game.startNewGame();
+        setupGameUI();
+    }
+
+    private void setupGameUI() {
+        getContentPane().removeAll();
+
         boardPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -60,19 +143,35 @@ public class GameUI extends JFrame {
                         JOptionPane.WARNING_MESSAGE);
             }
         });
-        JPanel controlPanel = new JPanel();
+
+        JButton backToMenuButton = new JButton("Powrót do menu");
+        backToMenuButton.addActionListener(e -> {
+            isInGame = false;
+            setupMenuUI();
+        });
+
+
+        JLabel difficultyDisplayLabel = new JLabel("Poziom: " + selectedDifficulty);
+        difficultyDisplayLabel.setFont(new Font("Arial", Font.BOLD, 14));
+
+        controlPanel = new JPanel();
+        controlPanel.add(difficultyDisplayLabel);
         controlPanel.add(resetButton);
         controlPanel.add(undoButton);
         controlPanel.add(checkButton);
+        controlPanel.add(backToMenuButton);
 
         setLayout(new BorderLayout());
         add(boardPanel, BorderLayout.CENTER);
         add(controlPanel, BorderLayout.SOUTH);
-        pack();
-        setVisible(true);
+
+        revalidate();
+        repaint();
     }
 
     private void handleMouseClick(MouseEvent e) {
+        if (!isInGame) return;
+
         int tileSize = boardPanel.getWidth() / game.board.tiles[0].length;
         int col = e.getX() / tileSize;
         int row = e.getY() / tileSize;
@@ -91,7 +190,6 @@ public class GameUI extends JFrame {
         int cols = game.board.tiles[0].length;
         int tileSize = Math.min(boardPanel.getWidth() / cols, boardPanel.getHeight() / rows);
 
-        // Draw tiles
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 Tile tile = game.board.tiles[i][j];
@@ -116,7 +214,6 @@ public class GameUI extends JFrame {
             }
         }
 
-        // Draw paths
         Graphics2D g2 = (Graphics2D)g;
         g2.setStroke(new BasicStroke(3));
 

@@ -7,12 +7,10 @@ public class LevelManager {
     public int currentLevel;
 
     public Board loadExampleLevel(int levelNumber) {
-        // Return example board
         return new Board();
     }
 
     public Board loadFromFile(String path) {
-        // Load board from file
         return new Board();
     }
 
