@@ -14,83 +14,12 @@ public class GameUI extends JFrame {
         setTitle("Numberlink Game");
         setSize(600, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        showMainMenu();
-    }
-
-    private void showMainMenu() {
-        getContentPane().removeAll();
-
-        JPanel menuPanel = new JPanel(new GridLayout(4, 1, 10, 10));
-        menuPanel.setBorder(BorderFactory.createEmptyBorder(50, 100, 50, 100));
-
-        JLabel titleLabel = new JLabel("Numberlink Game", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-
-        JButton newGameButton = new JButton("Nowa gra");
-        newGameButton.addActionListener(e -> showDifficultySelection());
-
-        JButton exitButton = new JButton("Wyjdź");
-        exitButton.addActionListener(e -> System.exit(0));
-
-        menuPanel.add(titleLabel);
-        menuPanel.add(newGameButton);
-        menuPanel.add(exitButton);
-
-        add(menuPanel, BorderLayout.CENTER);
-        revalidate();
-        repaint();
-    }
-
-    private void showDifficultySelection() {
-        getContentPane().removeAll();
-
-        JPanel panel = new JPanel(new GridLayout(4, 1, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(50, 100, 50, 100));
-
-        JLabel titleLabel = new JLabel("Wybierz poziom trudności", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-
-        panel.add(titleLabel);
-
-        JButton easyButton = new JButton("Łatwy");
-        easyButton.addActionListener(e -> {
-            game.difficulty = DifficultyLevel.EASY;
-            startGame();
-        });
-
-        JButton mediumButton = new JButton("Średni");
-        mediumButton.addActionListener(e -> {
-            game.difficulty = DifficultyLevel.MEDIUM;
-            startGame();
-        });
-
-        JButton hardButton = new JButton("Trudny");
-        hardButton.addActionListener(e -> {
-            game.difficulty = DifficultyLevel.HARD;
-            startGame();
-        });
-
-        panel.add(easyButton);
-        panel.add(mediumButton);
-        panel.add(hardButton);
-
-        JButton backButton = new JButton("Wróć");
-        backButton.addActionListener(e -> showMainMenu());
-        panel.add(backButton);
-
-        add(panel, BorderLayout.CENTER);
-        revalidate();
-        repaint();
-    }
-
-    private void startGame() {
-        setupGameUI();
+        setupUI();
         game.startNewGame();
+        repaint();
     }
 
-    private void setupGameUI() {
-        getContentPane().removeAll();
-
+    private void setupUI() {
         boardPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -121,32 +50,26 @@ public class GameUI extends JFrame {
         checkButton.addActionListener(e -> {
             if (game.checkSolution()) {
                 JOptionPane.showMessageDialog(GameUI.this,
-                        "Gratulacje! Rozwiązałeś łamigłówkę poprawnie!",
+                        "Gratulacje! Rozwiązałeś łamigłówkę poprawnie!\nWszystkie ścieżki są połączone i nie ma pustych pól.",
                         "Wygrana!",
                         JOptionPane.INFORMATION_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(GameUI.this,
-                        "Jeszcze nie rozwiązane.",
+                        "Jeszcze nie rozwiązane.\nSprawdź czy:\n1. Wszystkie pary są połączone\n2. Nie ma pustych pól",
                         "W trakcie rozwiązywania",
                         JOptionPane.WARNING_MESSAGE);
             }
         });
-
-        JButton menuButton = new JButton("Menu główne");
-        menuButton.addActionListener(e -> showMainMenu());
-
         JPanel controlPanel = new JPanel();
         controlPanel.add(resetButton);
         controlPanel.add(undoButton);
         controlPanel.add(checkButton);
-        controlPanel.add(menuButton);
 
         setLayout(new BorderLayout());
         add(boardPanel, BorderLayout.CENTER);
         add(controlPanel, BorderLayout.SOUTH);
-
-        revalidate();
-        repaint();
+        pack();
+        setVisible(true);
     }
 
     private void handleMouseClick(MouseEvent e) {
@@ -168,6 +91,7 @@ public class GameUI extends JFrame {
         int cols = game.board.tiles[0].length;
         int tileSize = Math.min(boardPanel.getWidth() / cols, boardPanel.getHeight() / rows);
 
+        // Draw tiles
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 Tile tile = game.board.tiles[i][j];
@@ -192,6 +116,7 @@ public class GameUI extends JFrame {
             }
         }
 
+        // Draw paths
         Graphics2D g2 = (Graphics2D)g;
         g2.setStroke(new BasicStroke(3));
 
